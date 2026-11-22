@@ -235,7 +235,10 @@ d.innerHTML=`<div class="pvb"><h2>Privacy Policy</h2><p class="sub">Witness Fitn
 <button class="btn" id="pvx" style="margin-top:16px">Close</button></div>`;
 document.body.appendChild(d);const c=()=>{d.remove();document.removeEventListener("keydown",k)},k=e=>{if(e.key==="Escape")c()};document.addEventListener("keydown",k);$("#pvx").onclick=c;d.onclick=e=>{if(e.target===d)c()};$("#pvx").focus()}
 let fstep=1,femail="",fdemo="";
-function auth(){if(mode==="forgot")return forgot();const reg=mode==="register";document.body.classList.add("authb");
+const isNet=m=>/failed to fetch|load failed|networkerror|network request failed/i.test(m||"");
+const netMsg="Can't reach the server. Check your internet, turn off any VPN or ad blocker, or try mobile data instead of school or public Wi-Fi. Then try again.";
+async function retry(fn){let r;for(let i=0;i<2;i++){try{r=await fn()}catch(e){r={error:{message:String((e&&e.message)||"Failed to fetch")}}}if(!(r.error&&isNet(r.error.message)))return r;await new Promise(s=>setTimeout(s,900))}return r}
+ function auth(){if(mode==="forgot")return forgot();const reg=mode==="register";document.body.classList.add("authb");
  $("#app").innerHTML=`<div class="auth"><img class="logo" src="wf-logo.png" alt="" width="96" height="96"><h1>Witness <span>Fitness</span></h1><div class="acard"><h2>${reg?"Start your rhythm":"Welcome back"}</h2><p class="sub" style="text-align:center">${reg?"Create a free account to get started.":"Sign in to continue your daily practice."}</p><div class="seg"><button aria-pressed="${!reg}" data-m="login">Sign in</button><button aria-pressed="${reg}" data-m="register">Create account</button></div>
  ${PERSIST?"":'<div class="warn">The database is not available for this visit, so your account and progress are saved in this browser only. They will not follow you to another device or browser.</div>'}
  ${reg?'<label for="fn">First name</label><input id="fn" autocomplete="given-name" placeholder="Your first name">':""}<label for="em">Email</label><input id="em" type="email" autocomplete="email" autocapitalize="none" placeholder="you@example.com"><label for="pw">Password</label><input id="pw" type="password" maxlength="30" placeholder="8 to 30 characters" autocomplete="${reg?"new-password":"current-password"}">
@@ -246,12 +249,12 @@ function auth(){if(mode==="forgot")return forgot();const reg=mode==="register";d
  const er=t=>$("#er").textContent=t;
  const submit=async()=>{const bt=$("#go");if(bt.disabled)return;const e=$("#em").value.trim().toLowerCase(),pw=$("#pw").value;
   if(!SB)return er("Can't connect to the database. Reload the page.");
-  if(!reg){if(!e||!pw)return er("Enter your email and password.");bt.disabled=true;try{const r=await SB.auth.signInWithPassword({email:e,password:pw});if(r.error)return er(/confirm/i.test(r.error.message)?"Please confirm your email first. Check your inbox.":"Email or password is incorrect.");await loadState(r.data.user);return enter()}catch(x){return er("Couldn't load your data. Try again.")}finally{bt.disabled=false}}
+  if(!reg){if(!e||!pw)return er("Enter your email and password.");bt.disabled=true;try{const r=await retry(()=>SB.auth.signInWithPassword({email:e,password:pw}));if(r.error)return er(isNet(r.error.message)?netMsg:/confirm/i.test(r.error.message)?"Please confirm your email first. Check your inbox.":"Email or password is incorrect.");await loadState(r.data.user);return enter()}catch(x){return er("Couldn't load your data. Try again.")}finally{bt.disabled=false}}
   const fn=$("#fn").value.trim();if(!fn)return er("Enter your first name.");if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e))return er("Enter a valid email.");const pe=pwCheck(pw);if(pe)return er(pe);
   if(!$("#ag").checked)return er("Please tick the box to continue.");
-  bt.disabled=true;try{const r=await SB.auth.signUp({email:e,password:pw,options:{data:{first:fn}}});if(r.error)return er(r.error.message);
+  bt.disabled=true;try{const r=await retry(()=>SB.auth.signUp({email:e,password:pw,options:{data:{first:fn}}}));if(r.error)return er(isNet(r.error.message)?netMsg:r.error.message);
    if(!r.data.session){mode="login";auth();toast("Check your email to confirm your account, then sign in.");return}
-   UID=r.data.user.id;S=newS(fn,e);save();enter()}catch(x){er("Couldn't create the account. Try again.")}finally{bt.disabled=false}};
+   UID=r.data.user.id;S=newS(fn,e);save();enter()}catch(x){er(isNet(x&&x.message)?netMsg:"Couldn't create the account. Try again.")}finally{bt.disabled=false}};
  $("#go").onclick=submit;document.querySelectorAll(".auth input:not([type=checkbox])").forEach(i=>i.onkeydown=ev=>{if(ev.key==="Enter")submit()})}
 /* Forgot password: step 1 enter email, step 2 enter the emailed code and a new password */
 function forgot(){document.body.classList.add("authb");const rec=fstep===3;
@@ -262,7 +265,7 @@ function forgot(){document.body.classList.add("authb");const rec=fstep===3;
  $("#bk").onclick=()=>{mode="login";fstep=1;REC=false;auth()};
  $("#go").onclick=async()=>{const bt=$("#go");bt.disabled=true;try{
   if(rec){const a=$("#np").value,b=$("#np2").value,pe=pwCheck(a);if(pe)return er(pe);if(a!==b)return er("The two passwords don't match.");const r=await SB.auth.updateUser({password:a});if(r.error)return er(r.error.message);await SB.auth.signOut();REC=false;mode="login";fstep=1;auth();toast("Password changed. Sign in with your new password.")}
-  else{const e=$("#fe").value.trim().toLowerCase();if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e))return er("Enter a valid email.");femail=e;const r=await SB.auth.resetPasswordForEmail(e,{redirectTo:location.origin+location.pathname});if(r.error)return er(r.error.message);ok("If that email has an account, a reset link is on its way. Check your inbox and spam folder.")}
+  else{const e=$("#fe").value.trim().toLowerCase();if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e))return er("Enter a valid email.");femail=e;const r=await SB.auth.resetPasswordForEmail(e,{redirectTo:location.origin+location.pathname});if(r.error)return er(isNet(r.error.message)?netMsg:r.error.message);ok("If that email has an account, a reset link is on its way. Check your inbox and spam folder.")}
  }finally{bt.disabled=false}};
  document.querySelectorAll(".auth input").forEach(i=>i.onkeydown=ev=>{if(ev.key==="Enter")$("#go").click()})}
 function enter(){document.body.classList.remove("authb");S.sched=S.sched||{};tab="today";render()}

@@ -67,6 +67,7 @@ nav span svg{width:11px;height:11px;stroke-width:2.5;vertical-align:-1px}
 #pvm h2{margin:0 0 4px}#pvm h3{font-size:16px;margin:16px 0 4px}#pvm p,#pvm li{font-size:14px;line-height:1.5}#pvm ul{padding-left:20px;margin:4px 0}
 </style></head><body><div id="app"></div><div id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0/dist/umd/supabase.js"></script>
+ <script src="wf-figures.js"></script>
 <script>
 const $=s=>document.querySelector(s),esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const uid=()=>Math.random().toString(36).slice(2,9),z=n=>String(n).padStart(2,"0");
@@ -138,9 +139,8 @@ function limbNote(){const L=P().limbs||{},b=LIMBS.filter(([k])=>(L[k]||0)>0).map
 function workout(cat){const c=caps(),p=P(),a=ageNow(),cd=new Set((p.conds||[]).concat(a!==null&&a<18?["teen"]:[],a>=65?["senior"]:[])),r=rules(),lv=p.level||"Beginner";
  const ok=e=>e[4]<=c.a&&e[5]<=c.l&&!(r.noH&&e[7]==="H")&&!e[8].split(" ").some(t=>t&&cd.has(t));
  const l=X.filter(e=>e[6]===cat&&ok(e));if(l.length<3&&cat!=="Seated")X.filter(e=>e[6]==="Seated"&&ok(e)).forEach(e=>{if(l.length<4)l.push(e)});
- return l.map(e=>({n:e[1],sets:e[2]>=3?Math.max(2,e[2]+(lv==="Beginner"?-1:lv==="Advanced"?1:0)):e[2],lv:{H:"High",M:"Moderate",L:"Low"}[e[7]],mu:e[9],...(([m,t,d])=>({amt:m,ad:d,steps:t.split(/(?<=[.!?])\s+/)}))(adapt(e[0],e[3],e[10],use()))}))}
-const exHTML=e=>`<details><summary><b>${esc(e.n)}</b><span class="sub" style="margin:0">${e.lv} · ${e.sets} sets × ${esc(e.amt)}</span></summary><p class="sub"><b>Target:</b> ${esc(e.mu)}</p>${e.ad?'<p class="sub"><b>Adapted for your body.</b></p>':""}<ol class="sub">${e.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol><p class="sub">Rest 30 sec between sets. Stop if you feel sharp pain.</p><p class="sub"><a href="https://www.youtube.com/results?search_query=${encodeURIComponent(e.n+" proper form")}" target="_blank" rel="noopener" style="color:var(--acc);font-weight:600"Watch how to do it</a></p></details>`;
-const AB={"Full Body":"Full",Cardio:"Cardio",Strength:"Lift",Stretching:"Stretch",Home:"Home",Balance:"Balance",Seated:"Seated",Rest:"Rest"};const defPlan={0:"Rest",1:"Full Body",2:"Cardio",3:"Strength",4:"Rest",5:"Home",6:"Stretching"};
+ return l.map(e=>({id:e[0],n:e[1],sets:e[2]>=3?Math.max(2,e[2]+(lv==="Beginner"?-1:lv==="Advanced"?1:0)):e[2],lv:{H:"High",M:"Moderate",L:"Low"}[e[7]],mu:e[9],...(([m,t,d])=>({amt:m,ad:d,steps:t.split(/(?<=[.!?])\s+/)}))(adapt(e[0],e[3],e[10],use()))}))}
+const exHTML=e=>`<details><summary><b>${esc(e.n)}</b><span class="sub" style="margin:0">${e.lv} · ${e.sets} sets × ${esc(e.amt)}</span></summary>${fig(e.id,e.n)}<p class="sub"><b>Target:</b> ${esc(e.mu)}</p>${e.ad?'<p class="sub"><b>Adapted for your body.</b></p>':""}<ol class="sub">${e.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol><p class="sub">Rest 30 sec between sets. Stop if you feel sharp pain.</p></details>`;const AB={"Full Body":"Full",Cardio:"Cardio",Strength:"Lift",Stretching:"Stretch",Home:"Home",Balance:"Balance",Seated:"Seated",Rest:"Rest"};const defPlan={0:"Rest",1:"Full Body",2:"Cardio",3:"Strength",4:"Rest",5:"Home",6:"Stretching"};
 function planFor(i){const v=S.plan[i]!==undefined?S.plan[i]:defPlan[i];if(v==="Rest")return v;const a=cats();return a.includes(v)?v:a[i%a.length]}
 const dFromK=k=>new Date(+k.slice(0,4),+k.slice(5,7)-1,+k.slice(8)),dLabel=k=>dFromK(k).toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric",year:"numeric"});
 function planForDate(k){const o=(S.over||{})[k];if(o!==undefined&&(o==="Rest"||cats().includes(o)))return o;return planFor(dFromK(k).getDay())}

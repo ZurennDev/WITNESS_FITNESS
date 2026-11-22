@@ -1,5 +1,11 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Witness Fitness</title> <meta name="description" content="Witness Fitness is a free mobile-friendly fitness website with personalized workouts, goal tracking, reminders, weather advice and GPS run and walk tracking.">
 <link rel="canonical" href="https://zurenndev.github.io/WITNESS_FITNESS/">
+<link rel="icon" type="image/png" href="wf-favicon.png">
+<link rel="apple-touch-icon" href="wf-apple-touch.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#FF6B2C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Witness">
 <style>
 :root{--bg:#F4F6FB;--card:#fff;--ink:#171A2E;--mute:#5E6380;--line:#D9DEEC;--acc:#C94A06;--on:#fff;--hot:#C23A27;--ok:#0E8A5B}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1221;--card:#1A1E35;--ink:#F1F3FF;--mute:#A4AACB;--line:#2A2F4D;--acc:#FF7A3D;--on:#0F1221;--hot:#FF8272;--ok:#3DD598}}
@@ -25,7 +31,7 @@ details{border-bottom:1px solid var(--line);padding:10px 0}summary{cursor:pointe
 .auth{padding:50px 18px 30px}.auth h1{text-align:center;margin-bottom:6px}.ok{color:var(--ok);font-size:13px;margin-top:8px}.warn{background:var(--line);border-radius:10px;padding:9px 11px;font-size:13px;margin-top:10px}
 body.authb{background:#13262D}
 .auth{min-height:100vh;padding:calc(34px + env(safe-area-inset-top,0px)) 20px 30px;background:radial-gradient(120% 55% at 100% 0%,#2C535F 0%,transparent 65%),linear-gradient(#162A31,#13262D);color:#F1F5F6;text-align:center}
-.auth .logo{width:62px;height:62px;margin:0 auto 22px;border-radius:20px;background:#FF6B2C;color:#fff;font-size:34px;display:grid;place-items:center;transform:rotate(-6deg);box-shadow:0 0 34px rgba(255,107,44,.4)}
+.auth .logo{display:block;width:96px;height:96px;margin:0 auto 18px}
 .auth h1{font-size:40px;font-weight:500;letter-spacing:-.01em;margin:0}.auth h1 span{color:#FF6B2C}
 .acard{margin-top:34px;background:rgba(22,40,46,.92);border:1px solid rgba(255,255,255,.08);border-radius:30px;padding:26px 22px 22px;text-align:left}
 .acard h2{text-align:center;font-size:24px;font-weight:500;margin:0 0 6px}
@@ -230,7 +236,7 @@ d.innerHTML=`<div class="pvb"><h2>Privacy Policy</h2><p class="sub">Witness Fitn
 document.body.appendChild(d);const c=()=>{d.remove();document.removeEventListener("keydown",k)},k=e=>{if(e.key==="Escape")c()};document.addEventListener("keydown",k);$("#pvx").onclick=c;d.onclick=e=>{if(e.target===d)c()};$("#pvx").focus()}
 let fstep=1,femail="",fdemo="";
 function auth(){if(mode==="forgot")return forgot();const reg=mode==="register";document.body.classList.add("authb");
- $("#app").innerHTML=`<div class="auth"><div class="logo" aria-hidden="true">W</div><h1>Witness <span>Fitness</span></h1><div class="acard"><h2>${reg?"Start your rhythm":"Welcome back"}</h2><p class="sub" style="text-align:center">${reg?"Create a free account to get started.":"Sign in to continue your daily practice."}</p><div class="seg"><button aria-pressed="${!reg}" data-m="login">Sign in</button><button aria-pressed="${reg}" data-m="register">Create account</button></div>
+ $("#app").innerHTML=`<div class="auth"><img class="logo" src="wf-logo.png" alt="" width="96" height="96"><h1>Witness <span>Fitness</span></h1><div class="acard"><h2>${reg?"Start your rhythm":"Welcome back"}</h2><p class="sub" style="text-align:center">${reg?"Create a free account to get started.":"Sign in to continue your daily practice."}</p><div class="seg"><button aria-pressed="${!reg}" data-m="login">Sign in</button><button aria-pressed="${reg}" data-m="register">Create account</button></div>
  ${PERSIST?"":'<div class="warn">The database is not available for this visit, so your account and progress are saved in this browser only. They will not follow you to another device or browser.</div>'}
  ${reg?'<label for="fn">First name</label><input id="fn" autocomplete="given-name" placeholder="Your first name">':""}<label for="em">Email</label><input id="em" type="email" autocomplete="email" autocapitalize="none" placeholder="you@example.com"><label for="pw">Password</label><input id="pw" type="password" maxlength="30" placeholder="8 to 30 characters" autocomplete="${reg?"new-password":"current-password"}">
  ${reg?'<p class="sub">Use 8 to 30 characters. Include a capital letter, a small letter, a number and a symbol.</p><label style="display:flex;gap:8px;align-items:flex-start;font-weight:400"><input type="checkbox" id="ag" style="margin-top:3px"> I understand this website gives general fitness tips, not medical advice. My data is saved to my account.</label>':""}
@@ -479,4 +485,5 @@ async function boot(){
  try{const g=await SB.auth.getSession(),u=g.data&&g.data.session&&g.data.session.user;if(u&&!REC)await loadState(u)}catch(e){toast("Couldn't load your saved data. Check your connection and reload.")}
  if(REC)return;render()}
 boot();
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js"));
 </script></body></html>

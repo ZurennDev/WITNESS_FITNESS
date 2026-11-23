@@ -1,5 +1,5 @@
 /* Witness Fitness: background push reminders (client side) */
-const VAPID="PASTE_PUBLIC_KEY_HERE";
+const VAPID="BEcEr0rEoCmUz0fRDSlj7CVZ_K2wQYuy6BNeryYJvxFCkmp694mnOG-sdXha84dlW6w9m7ms6ZozATTfe8cJ38E";
 const b64u=s=>{const b=atob((s+"=".repeat((4-s.length%4)%4)).replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from(b,c=>c.charCodeAt(0))};
 const pushOK=()=>"serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window&&VAPID.indexOf("PASTE")<0;
 const pushSub=async()=>(await navigator.serviceWorker.ready).pushManager.getSubscription();

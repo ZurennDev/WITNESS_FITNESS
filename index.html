@@ -69,6 +69,7 @@ nav span svg{width:11px;height:11px;stroke-width:2.5;vertical-align:-1px}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0/dist/umd/supabase.js"></script>
  <script src="wf-figures.js"></script>
  <script src="wf-progress.js"></script>
+ <script src="wf-push.js"></script>
 <script>
 const $=s=>document.querySelector(s),esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const uid=()=>Math.random().toString(36).slice(2,9),z=n=>String(n).padStart(2,"0");
@@ -271,7 +272,7 @@ function forgot(){document.body.classList.add("authb");const rec=fstep===3;
  }finally{bt.disabled=false}};
  document.querySelectorAll(".auth input").forEach(i=>i.onkeydown=ev=>{if(ev.key==="Enter")$("#go").click()})}
 function enter(){document.body.classList.remove("authb");S.sched=S.sched||{};tab="today";render()}
-const out=async()=>{if(dirty.size){clearTimeout(ft);flush()}try{await wq}catch(e){}S=null;T=null;clearInterval(TI);sstop();wlOff();clearInterval(stm);sst="idle";sp=[];sd=0;ss=0;WX=null;wxTried=false;ds(SK);try{SB&&await SB.auth.signOut()}catch(e){}UID=null;mode="login";fdemo="";calSel=null;auth()};
+const out=async()=>{try{if(typeof pushOff==="function")await pushOff()}catch(e){}if(dirty.size){clearTimeout(ft);flush()}try{await wq}catch(e){}S=null;T=null;clearInterval(TI);sstop();wlOff();clearInterval(stm);sst="idle";sp=[];sd=0;ss=0;WX=null;wxTried=false;ds(SK);try{SB&&await SB.auth.signOut()}catch(e){}UID=null;mode="login";fdemo="";calSel=null;auth()};
 /* Today + calendar */
 const planOn=(k,tk)=>k>=tk?planForDate(k):S.sched[k];
 function cal(edit){const n=new Date(),b=new Date(n.getFullYear(),n.getMonth()+calM,1),len=new Date(b.getFullYear(),b.getMonth()+1,0).getDate(),lead=(b.getDay()+6)%7,tk=day();let cells=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(w=>`<span>${w}</span>`).join("")+"<span></span>".repeat(lead),dn=0,tot=0;
@@ -434,10 +435,10 @@ function strideMount(){document.querySelectorAll("[data-sa]").forEach(b=>b.oncli
  wireWx();sty();sui()}
 /* Reminders */
 function rem(){shell(`<h1>Reminders</h1><div class="warn">Reminders only appear while this page is open in your browser. They will not ring if you close the page or lock your phone.</div><div class="card">${S.rem.length?S.rem.map(r=>`<div class="row" style="margin-bottom:8px"><div><b style="font-size:20px">${r.time}</b><p class="sub" style="margin:0">${esc(r.label)}</p></div><div><input type="checkbox" data-rt="${r.id}" aria-label="Enable ${esc(r.label)}"${r.on?" checked":""}> <button class="chip" data-rd="${r.id}">Delete</button></div></div>`).join(""):'<p class="sub">No reminders yet.</p>'}</div>
- <label for="rt">Time</label><input id="rt" type="time" value="05:00"><label for="rl">Label</label><input id="rl" maxlength="40" value="Jogging in the morning" placeholder="e.g. Jogging in the morning"><div class="err" id="er"></div><button class="btn" id="ra">Add reminder</button><button class="btn g" id="rn">Allow notifications</button>`);
+ <label for="rt">Time</label><input id="rt" type="time" value="05:00"><label for="rl">Label</label><input id="rl" maxlength="40" value="Jogging in the morning" placeholder="e.g. Jogging in the morning"><div class="err" id="er"></div><button class="btn" id="ra">Add reminder</button><button class="btn g" id="rn">Allow notifications</button>${typeof pushHTML==="function"?pushHTML():""}`);
  document.querySelectorAll("[data-rt]").forEach(b=>b.onchange=()=>{S.rem.find(r=>r.id===b.dataset.rt).on=b.checked;save()});document.querySelectorAll("[data-rd]").forEach(b=>b.onclick=()=>{S.rem=S.rem.filter(r=>r.id!==b.dataset.rd);save();rem()});
  $("#ra").onclick=()=>{const t=$("#rt").value,l=$("#rl").value.trim();if(!t||!l)return $("#er").textContent="Set a time and a label.";S.rem.push({id:uid(),time:t,label:l,on:true});save();rem()};
- $("#rn").onclick=()=>{try{Notification.requestPermission().then(p=>toast(p==="granted"?"Notifications on.":"Notifications not allowed."))}catch(e){toast("Notifications aren't supported here.")}}}
+ $("#rn").onclick=()=>{try{Notification.requestPermission().then(p=>toast(p==="granted"?"Notifications on.":"Notifications not allowed."))}catch(e){toast("Notifications aren't supported here.")}};if(typeof pushMount==="function")pushMount()}
 /* Profile */
 const IMP=/decapitat|\b(head|brain|skull|neck|torso)\b[^.,;\n]{0,25}\b(amputat\w*|severed|cut off)|\b(amputat\w*|severed)\b[^.,;\n]{0,25}\b(head|brain|skull|neck|torso)\b/i;
 const IMP2=/\b(?:without|no|zero)\s+(?:a\s+|any\s+|my\s+)?(?:head|brain|skull|torso)\b(?!\s+(?:injur|pain|ache|trauma|problem|issue|condition|concussion))|headless|\b(?:heart|brain)\s+(?:amputat\w*|removed|missing|severed)|\b(?:amputat\w*|removed|missing|severed)\s+(?:heart|brain)/i;

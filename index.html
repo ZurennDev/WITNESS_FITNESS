@@ -5,6 +5,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#FF6B2C">
 <meta name="apple-mobile-web-app-capable" content="yes">
+ <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Witness">
 <style>
 :root{--bg:#F4F6FB;--card:#fff;--ink:#171A2E;--mute:#5E6380;--line:#D9DEEC;--acc:#C94A06;--on:#fff;--hot:#C23A27;--ok:#0E8A5B}
@@ -142,7 +143,7 @@ function workout(cat){const c=caps(),p=P(),a=ageNow(),cd=new Set((p.conds||[]).c
  const ok=e=>e[4]<=c.a&&e[5]<=c.l&&!(r.noH&&e[7]==="H")&&!e[8].split(" ").some(t=>t&&cd.has(t));
  const l=X.filter(e=>e[6]===cat&&ok(e));if(l.length<3&&cat!=="Seated")X.filter(e=>e[6]==="Seated"&&ok(e)).forEach(e=>{if(l.length<4)l.push(e)});
  return l.map(e=>({id:e[0],n:e[1],sets:e[2]>=3?Math.max(2,e[2]+(lv==="Beginner"?-1:lv==="Advanced"?1:0)):e[2],lv:{H:"High",M:"Moderate",L:"Low"}[e[7]],mu:e[9],...(([m,t,d])=>({amt:typeof scaleAmt==="function"?scaleAmt(m):m,ad:d,steps:t.split(/(?<=[.!?])\s+/)}))(adapt(e[0],e[3],e[10],use()))}))}
-const exHTML=e=>`<details><summary><b>${esc(e.n)}</b><span class="sub" style="margin:0">${e.lv} · ${e.sets} sets × ${esc(e.amt)}</span></summary>${fig(e.id,e.n)}<p class="sub"><b>Target:</b> ${esc(e.mu)}</p>${e.ad?'<p class="sub"><b>Adapted for your body.</b></p>':""}<ol class="sub">${e.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol><p class="sub">Rest 30 sec between sets. Stop if you feel sharp pain.</p></details>`;const AB={"Full Body":"Full",Cardio:"Cardio",Strength:"Lift",Stretching:"Stretch",Home:"Home",Balance:"Balance",Seated:"Seated",Rest:"Rest"};const defPlan={0:"Rest",1:"Full Body",2:"Cardio",3:"Strength",4:"Rest",5:"Home",6:"Stretching"};
+const exHTML=e=>`<details><summary><b>${esc(e.n)}</b><span class="sub" style="margin:0">${e.lv} · ${e.sets} sets × ${esc(e.amt)}</span></summary>${typeof fig==="function"?fig(e.id,e.n):""}<p class="sub"><b>Target:</b> ${esc(e.mu)}</p>${e.ad?'<p class="sub"><b>Adapted for your body.</b></p>':""}<ol class="sub">${e.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol><p class="sub">Rest 30 sec between sets. Stop if you feel sharp pain.</p></details>`;const AB={"Full Body":"Full",Cardio:"Cardio",Strength:"Lift",Stretching:"Stretch",Home:"Home",Balance:"Balance",Seated:"Seated",Rest:"Rest"};const defPlan={0:"Rest",1:"Full Body",2:"Cardio",3:"Strength",4:"Rest",5:"Home",6:"Stretching"};
 function planFor(i){const v=S.plan[i]!==undefined?S.plan[i]:defPlan[i];if(v==="Rest")return v;const a=cats();return a.includes(v)?v:a[i%a.length]}
 const dFromK=k=>new Date(+k.slice(0,4),+k.slice(5,7)-1,+k.slice(8)),dLabel=k=>dFromK(k).toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric",year:"numeric"});
 function planForDate(k){const o=(S.over||{})[k];if(o!==undefined&&(o==="Rest"||cats().includes(o)))return o;return planFor(dFromK(k).getDay())}
@@ -207,7 +208,7 @@ function tick(){if(!T||!T.run)return;if(Date.now()>=T.end){try{navigator.vibrate
  if(T.ph==="Work"){T.ph="Rest";T.end=Date.now()+T.r*1000}else{T.i++;if(T.i>=T.list.length){const m=Math.max(1,Math.round(T.list.length*(T.w+T.r)/60));logDone(T.label,m,"Exercise Timer");clearInterval(TI);T=null;if(sst==="idle")wlOff();toast("Workout complete and logged.");if(tab==="workouts")workouts();return}T.ph="Work";T.end=Date.now()+T.w*1000}}paintT()}
 function paintT(){if(!T||!$("#tph"))return;const l=Math.max(0,Math.ceil(((T.run?T.end:Date.now()+T.rem)-Date.now())/1000));$("#tph").textContent=T.ph+" · Set "+(T.i+1)+"/"+T.list.length;$("#tbg").textContent=Math.floor(l/60)+":"+z(l%60);$("#tex").textContent=T.list[T.i]}
 /* reminders fire while the app is open */
-setInterval(()=>{if(!S)return;const n=new Date(),t=z(n.getHours())+":"+z(n.getMinutes()),k=day()+t;S.rem.forEach(r=>{if(r.on&&r.time===t&&r.last!==k){r.last=k;save();toast("Reminder: "+r.label);try{Notification.permission==="granted"&&new Notification("Witness Fitness",{body:r.label})}catch(e){}}})},15000);
+setInterval(()=>{if(!S)return;const n=new Date(),t=z(n.getHours())+":"+z(n.getMinutes()),k=day()+t;S.rem.forEach(r=>{if(r.on&&r.time===t&&r.last!==k){r.last=k;save();toast("Reminder: "+r.label);}})},15000);
 /* shell */
 const IW=p=>'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px" aria-hidden="true">'+p+'</svg>';
 const IC={lock:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',timer:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg>'};
@@ -231,7 +232,7 @@ d.innerHTML=`<div class="pvb"><h2>Privacy Policy</h2><p class="sub">Witness Fitn
 <h3>Location</h3><p>If you allow it, your device location is used to show local weather and to measure distance during a run or walk. GPS points are used only while you track and are not saved to your account. Weather is fetched from Open-Meteo using your coordinates or your profile city. Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a>.</p>
 <h3>How we use it</h3><p>To run the app, personalize workouts and goals, show reminders, and keep your progress. We do not sell your data or use it for advertising.</p>
 <h3>Where it is stored</h3><p>Your data is saved to your account in our Supabase database (hosted in Tokyo, Japan). Only you can read your own data through the app. The app owner can access the database.</p>
-<h3>Reminders and notifications</h3><p>Reminders only appear while this page is open. Notifications are sent only if you allow them in your browser.</p>
+<h3>Reminders and notifications</h3><p>If you turn on background reminders, we store a device address and your time zone so our server can send them. You can turn them off in Reminders, and they are removed when you delete your account. Notifications are sent only if you allow them in your browser.</p>
 <h3>Your choices</h3><ul><li>Edit your profile at any time.</li><li>Delete your account and all your data from Profile, using "Delete my account and data".</li></ul>
 <h3>Not medical advice</h3><p>Witness Fitness gives general fitness tips, not medical advice. Ask a doctor first if you have a health problem.</p>
 <h3>Children</h3><p>This app is for ages 13 and up.</p>
@@ -434,7 +435,7 @@ function strideMount(){document.querySelectorAll("[data-sa]").forEach(b=>b.oncli
   smsg=had?`Finished: ${sd.toFixed(2)} km in ${sfmt(ss)}. Logged to your goals.`:"Finished. No distance recorded.";goals()};
  wireWx();sty();sui()}
 /* Reminders */
-function rem(){shell(`<h1>Reminders</h1><div class="warn">Reminders only appear while this page is open in your browser. They will not ring if you close the page or lock your phone.</div><div class="card">${S.rem.length?S.rem.map(r=>`<div class="row" style="margin-bottom:8px"><div><b style="font-size:20px">${r.time}</b><p class="sub" style="margin:0">${esc(r.label)}</p></div><div><input type="checkbox" data-rt="${r.id}" aria-label="Enable ${esc(r.label)}"${r.on?" checked":""}> <button class="chip" data-rd="${r.id}">Delete</button></div></div>`).join(""):'<p class="sub">No reminders yet.</p>'}</div>
+function rem(){shell(`<h1>Reminders</h1><div class="warn">Turn on background reminders below to get them even when the app is closed. Without it, reminders only appear while this page is open.</div><div class="card">${S.rem.length?S.rem.map(r=>`<div class="row" style="margin-bottom:8px"><div><b style="font-size:20px">${r.time}</b><p class="sub" style="margin:0">${esc(r.label)}</p></div><div><input type="checkbox" data-rt="${r.id}" aria-label="Enable ${esc(r.label)}"${r.on?" checked":""}> <button class="chip" data-rd="${r.id}">Delete</button></div></div>`).join(""):'<p class="sub">No reminders yet.</p>'}</div>
  <label for="rt">Time</label><input id="rt" type="time" value="05:00"><label for="rl">Label</label><input id="rl" maxlength="40" value="Jogging in the morning" placeholder="e.g. Jogging in the morning"><div class="err" id="er"></div><button class="btn" id="ra">Add reminder</button><button class="btn g" id="rn">Allow notifications</button>${typeof pushHTML==="function"?pushHTML():""}`);
  document.querySelectorAll("[data-rt]").forEach(b=>b.onchange=()=>{S.rem.find(r=>r.id===b.dataset.rt).on=b.checked;save()});document.querySelectorAll("[data-rd]").forEach(b=>b.onclick=()=>{S.rem=S.rem.filter(r=>r.id!==b.dataset.rd);save();rem()});
  $("#ra").onclick=()=>{const t=$("#rt").value,l=$("#rl").value.trim();if(!t||!l)return $("#er").textContent="Set a time and a label.";S.rem.push({id:uid(),time:t,label:l,on:true});save();rem()};

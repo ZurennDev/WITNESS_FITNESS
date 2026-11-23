@@ -15,5 +15,5 @@ async function pushMount(){const on=$("#pon");if(!on)return;const off=$("#poff")
   const reg=await navigator.serviceWorker.ready;let s=await reg.pushManager.getSubscription();
   if(!s)s=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID)});
   const r=await SB.from("push_subs").upsert({endpoint:s.endpoint,user_id:UID,sub:s.toJSON(),tz:Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC"});
-  if(r.error)throw r.error;toast("Background reminders on.")}catch(e){toast("Couldn't turn on reminders. Try again.")}finally{on.disabled=false;paint()}};
+  if(r.error)throw r.error;toast("Background reminders on.")}catch(e){console.log(e);toast("Couldn't turn on: "+((e&&e.message)||e))}finally{on.disabled=false;paint()}};
  off.onclick=async()=>{await pushOff();toast("Turned off.");paint()};paint()}

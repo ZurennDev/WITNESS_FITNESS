@@ -68,6 +68,7 @@ nav span svg{width:11px;height:11px;stroke-width:2.5;vertical-align:-1px}
 </style></head><body><div id="app"></div><div id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0/dist/umd/supabase.js"></script>
  <script src="wf-figures.js"></script>
+ <script src="wf-progress.js"></script>
 <script>
 const $=s=>document.querySelector(s),esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const uid=()=>Math.random().toString(36).slice(2,9),z=n=>String(n).padStart(2,"0");
@@ -319,10 +320,10 @@ function goals(){shell(`<h1>Goals</h1><p class="sub">Progress updates from your 
  ${S.goals.length?S.goals.map(g=>{const c=prog(g),p=Math.min(100,Math.round(c/g.target*100));return`<div class="card"><div class="row"><b>${esc(g.title)}</b><button class="chip" data-gd="${g.id}" aria-label="Delete goal">Delete</button></div><div class="bar" role="progressbar" aria-valuenow="${p}" aria-valuemin="0" aria-valuemax="100"><i style="width:${p}%"></i></div><div class="row"><span class="sub" style="margin:0">${c} / ${g.target} ${g.unit==="min"?"min this week":g.unit==="sessions"?"sessions this week":"done"}</span>${g.unit==="custom"?`<button class="btn s" data-gp="${g.id}">+1</button>`:""}</div></div>`}).join(""):'<div class="card"><p class="sub">No goals yet.</p></div>'}
  <h2>New goal</h2><label for="gt">Title</label><input id="gt" maxlength="40" placeholder="e.g. Run 3 times"><label for="gn">Target</label><input id="gn" type="number" min="1" max="10000" value="3"><label for="gu">Counts</label><select id="gu"><option value="min">Minutes this week</option><option value="sessions">Sessions this week</option><option value="custom">Manual (+1 button)</option></select><div class="err" id="er"></div><button class="btn" id="ga">Add goal</button>
  <h2>Log an activity yourself</h2><div class="card"><label for="la">Activity</label><select id="la">${["Run","Walk","Gym","Stretch"].map(a=>`<option>${a}</option>`).join("")}</select><p class="sub" id="lw">${esc(wxTag("Run"))}</p><label for="lm">Minutes</label><input id="lm" type="number" min="1" max="600" value="30"><button class="btn" id="lg">Log activity</button></div>
- <h2>Badges</h2>${badgeCard()}`);
+ ${progressHTML()}<h2>Badges</h2>${badgeCard()}`);
  document.querySelectorAll("[data-gd]").forEach(b=>b.onclick=()=>{S.goals=S.goals.filter(g=>g.id!==b.dataset.gd);save();goals()});document.querySelectorAll("[data-gp]").forEach(b=>b.onclick=()=>{const g=S.goals.find(g=>g.id===b.dataset.gp);g.cur=(g.cur||0)+1;save();goals()});
  $("#ga").onclick=()=>{const t=$("#gt").value.trim(),n=+$("#gn").value;const u=$("#gu").value,mx=u==="min"?3000:u==="sessions"?50:10000;if(!t||!(n>=1)||n>mx)return $("#er").textContent="Add a title and a target from 1 to "+mx+".";S.goals.push({id:uid(),title:t,target:Math.round(n),unit:u,cur:0});save();goals()};
- $("#lg").onclick=()=>{const m=+$("#lm").value;if(!(m>=1&&m<=600&&m===Math.round(m)))return toast("Enter whole minutes from 1 to 600.");if(minsOn(day())+m>1440)return toast("That is more than 24 hours in one day. Check the minutes.");logDone($("#la").value,m,"Manual log");toast("Activity logged.");goals()};$("#la").onchange=e=>$("#lw").textContent=wxTag(e.target.value);strideMount()}
+ $("#lg").onclick=()=>{const m=+$("#lm").value;if(!(m>=1&&m<=600&&m===Math.round(m)))return toast("Enter whole minutes from 1 to 600.");if(minsOn(day())+m>1440)return toast("That is more than 24 hours in one day. Check the minutes.");logDone($("#la").value,m,"Manual log");toast("Activity logged.");goals()};$("#la").onchange=e=>$("#lw").textContent=wxTag(e.target.value);strideMount();progressMount()}
 /* Weather */
 const WXI={
 sunny:[IW('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/>'),"Clear / Sunny","Clear skies.","Skip long, hard sessions in the midday sun."],

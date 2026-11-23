@@ -493,4 +493,6 @@ let hidAt=0;document.addEventListener("visibilitychange",async()=>{if(document.v
 if(!S||!SB||Date.now()-hidAt<60000||dirty.size||T||sst!=="idle")return;try{await wq}catch(e){}try{const g=await SB.auth.getSession(),u=g.data.session&&g.data.session.user;if(u&&!dirty.size){await loadState(u);render()}}catch(e){}});                  
 boot();
 if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js"));
-<script src="wf-more.js"></script></script></body></html>
+</script>
+<script src="wf-more.js"></script>
+</body></html>

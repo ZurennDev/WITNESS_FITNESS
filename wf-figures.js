@@ -189,10 +189,10 @@ function draw3(v,t){
  var pr=v.E.b?prog((v.clock%CYC)/CYC):0,B=upd(v,pr),lb=v.E.lb||(v.E.b?["Start","End"]:["Position"]);
  v.hud.textContent=lb[pr>.5?1:0];var ks=v.E.k||[],tx=ks.map(function(k){return JT[k][3]+" "+ang(B,k)+"°"}).join(" · ");if(v.cap.textContent!==tx)v.cap.textContent=tx;
  var c=v.cam;c.position.set(v.tx+v.dist*Math.sin(v.az)*Math.cos(v.el),v.ty+v.dist*Math.sin(v.el),v.tz+v.dist*Math.cos(v.az)*Math.cos(v.el));c.lookAt(v.tx,v.ty,v.tz);v.ren.render(v.sc,c)}
-function kill(v){if(v.dead)return;v.dead=1;try{v.ui.remove();v.el.firstChild.style.display="";v.ren.dispose();v.ren.forceContextLoss()}catch(e){}if(v.el._v===v)v.el._v=null}
-function loop(t){raf=0;V=V.filter(function(v){if(!v.el.isConnected||v.dead){kill(v);return false}return true});V.forEach(function(v){draw3(v,t)});if(V.length)raf=requestAnimationFrame(loop)}
+function kill(v,why){if(v.dead)return;v.dead=1;try{console.info("WF3D closed:",why||"?")}catch(e){}try{v.ui.remove();v.el.firstChild.style.display="";v.ren.dispose();v.ren.forceContextLoss()}catch(e){}if(v.el._v===v)v.el._v=null}
+function loop(t){raf=0;V=V.filter(function(v){if(!v.el.isConnected||v.dead){kill(v,"removed from page (the app redrew this screen)");return false}return true});V.forEach(function(v){try{draw3(v,t)}catch(e){console.error("WF3D error:",e);v.el._bad=1;kill(v,"error")}});if(V.length)raf=requestAnimationFrame(loop)}
 function startV(el){if(el._v||el._bad)return;loadThree(function(){if(!el.isConnected||el._v||!el._vis)return;try{el._v=mk(el);V.push(el._v);if(!raf)raf=requestAnimationFrame(loop)}catch(e){el._bad=1;el._v=null}},function(){el._bad=1})}
-var io=window.IntersectionObserver?new IntersectionObserver(function(es){es.forEach(function(e){e.target._vis=e.isIntersecting;if(e.isIntersecting)startV(e.target);else if(e.target._v)kill(e.target._v)})},{threshold:.01}):null;
+var io=window.IntersectionObserver?new IntersectionObserver(function(es){es.forEach(function(e){e.target._vis=e.isIntersecting;if(e.isIntersecting)startV(e.target);else if(e.target._v){var el=e.target;setTimeout(function(){if(!el._vis&&el._v)kill(el._v,"scrolled out of view")},800)}})},{threshold:.01}):null;
 function watch(n){if(!io||n.nodeType!==1)return;var l=[].slice.call(n.querySelectorAll(".wf3"));if(n.matches&&n.matches(".wf3"))l.push(n);l.forEach(function(x){if(!x._w){x._w=1;io.observe(x)}})}
 new MutationObserver(function(ms){ms.forEach(function(m){m.addedNodes.forEach(watch)})}).observe(document.documentElement,{childList:true,subtree:true});
 if(document.body)watch(document.body);

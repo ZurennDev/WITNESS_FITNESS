@@ -68,7 +68,6 @@ nav span svg{width:11px;height:11px;stroke-width:2.5;vertical-align:-1px}
 #pvm h2{margin:0 0 4px}#pvm h3{font-size:16px;margin:16px 0 4px}#pvm p,#pvm li{font-size:14px;line-height:1.5}#pvm ul{padding-left:20px;margin:4px 0}
 </style></head><body><div id="app"></div><div id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0/dist/umd/supabase.js"></script>
- <script src="wf-figures.js"></script>
  <script src="wf-body.js"></script>
  <script src="wf-progress.js"></script>
  <script src="wf-push.js"></script>
@@ -497,5 +496,6 @@ if(!S||!SB||Date.now()-hidAt<60000||dirty.size||T||sst!=="idle")return;try{await
 boot();
 if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js"));
 </script>
+<script src="wf-coach.js"></script>
 <script src="wf-more.js"></script>
 </body></html>

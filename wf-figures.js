@@ -1,4 +1,4 @@
-/* wf-figures.js v2: Witness Fitness demonstrator mannequin.
+/* wf-figures.js v3 (2D figures + original 3D viewer). Older notes: Witness Fitness demonstrator mannequin.
    index.html calls fig(exerciseId, exerciseName) and expects an HTML string back.
    HOW IT WORKS: every exercise = a START pose and an END pose, each a list of
    segment angles in degrees. The body is built joint by joint (hip > knee > ankle),
@@ -106,5 +106,96 @@ smarch:{props:[["chair"]],a:p({th:90,sk:0}),b:p({th:125,sk:5,h2:90,s2:0}),k:["kn
 arms:{props:[["chair"]],a:p({th:90,sk:0,ua:90,fa:90}),b:p({th:90,sk:0,ua:160,fa:160}),lb:["Arm forward","Arm up"],k:["shoulder"],n:"Draw circles with your arm: small first, then larger."},
 legext:{props:[["chair"]],a:p({th:90,sk:0}),b:p({th:90,sk:90,fo:180}),k:["knee"],n:"Straighten the knee until the leg is level, pause, lower slowly."}
 };
-window.fig=fig;window.WF_POSES=T;
+/* ===== 3D VIEWER (Three.js r128, loaded on demand from cdnjs) =====
+   Original mannequin: capsule limbs, orange joints, soft floor + shadow.
+   The same pose table T drives it; angles interpolate Start <-> End.
+   If WebGL or the library is unavailable, the 2D figure stays visible. */
+var S3=0.0155,CYC=3600,V=[],raf=0,tl=0,TQ=[];
+var ZO={hn:.08,k:.08,a:.08,t:.08,hf:-.08,k2:-.08,a2:-.08,t2:-.08,sn:.17,e:.17,w:.17,sf:-.17,e2:-.17,w2:-.17,hip:0,S:0,hd:0};
+var ALLK=["hip","S","e","w","e2","w2","k","a","t","k2","a2","t2","hd","hn","hf","sn","sf"];
+function eff(q,fr){var m=fr?-1:1,o=Object.assign({},q);[["u2","ua"],["f2","fa"],["h2","th"],["s2","sk"],["o2","fo"]].forEach(function(x){if(o[x[0]]===undefined)o[x[0]]=m*q[x[1]]});return o}
+function mix(a,b,u){var o={};for(var k in a)o[k]=a[k]+(b[k]-a[k])*u;return o}
+function ss(x){return x*x*(3-2*x)}
+function prog(u){return u<.15?0:u<.5?ss((u-.15)/.35):u<.65?1:1-ss((u-.65)/.35)}
+function loadThree(ok,bad){if(window.THREE)return ok();if(tl===-1)return bad();TQ.push([ok,bad]);if(tl)return;tl=1;
+ var s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+ s.onload=function(){TQ.forEach(function(x){x[0]()});TQ=[]};s.onerror=function(){tl=-1;TQ.forEach(function(x){x[1]()});TQ=[]};document.head.appendChild(s)}
+function fig3(id,name){var h=fig(id,name);if(!h)return"";var nm=String(name||"").replace(/[&<>"]/g,"");
+ return'<div class="wf3" data-id="'+id+'" role="group" aria-label="3D demonstration: '+nm+'. Drag to rotate.">'+'<div class="wf3-2d">'+h+'</div></div>'}
+function setBone(m,a,b){var d=new THREE.Vector3().subVectors(b,a),L=d.length()||1e-4;m.position.copy(a).addScaledVector(d,.5);m.scale.set(1,L,1);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize())}
+function upd(v,pr){
+ var q=mix(v.qa,v.qb,pr),B=place(build(q,v.fr),v.pin,v.px),P=v.P,fr=v.fr,px=v.px;
+ ALLK.forEach(function(k){var p=B[k];if(fr)P[k].set(0,(FL-p[1])*S3,(p[0]-px)*S3);else P[k].set((p[0]-px)*S3,(FL-p[1])*S3,ZO[k])});
+ if(fr){P.t.copy(P.a).add(new THREE.Vector3(.13,-.02,0));P.t2.copy(P.a2).add(new THREE.Vector3(.13,-.02,0))}
+ var tr=q.t*D,c=[(B.hip[0]+B.S[0])/2+q.sp*Math.cos(tr),(B.hip[1]+B.S[1])/2+q.sp*Math.sin(tr)];
+ for(var i=0;i<=6;i++){var u=i/6,x=(1-u)*(1-u)*B.hip[0]+2*u*(1-u)*c[0]+u*u*B.S[0],y=(1-u)*(1-u)*B.hip[1]+2*u*(1-u)*c[1]+u*u*B.S[1];
+  if(fr)v.TP[i].set(0,(FL-y)*S3,(x-px)*S3);else v.TP[i].set((x-px)*S3,(FL-y)*S3,0);v.ts[i].position.copy(v.TP[i]);if(i<6)setBone(v.tm[i],v.TP[i],v.TP[i+1])}
+ v.bones.forEach(function(b){setBone(b.m,P[b.a],P[b.b])});v.joints.forEach(function(j){j.m.position.copy(P[j.k])});
+ var ha=(q.t+q.hd)*D;v.face.position.set(P.hd.x+Math.cos(ha)*.095,P.hd.y-Math.sin(ha)*.095,P.hd.z);
+ v.bar&&v.bar.position.set(P.w.x,P.w.y,0);
+ v.shadow.position.set(P.hip.x,.004,fr?P.hip.z:0);return B}
+function mk(el){
+ var E=T[el.dataset.id],fr=!!E.front,v={el:el,E:E,fr:fr,pin:E.pin||"a",px:E.px||60,P:{},TP:[],tm:[],ts:[],bones:[],joints:[],clock:0,last:0,paused:false,dirty:1};
+ v.qa=eff(E.a,fr);v.qb=eff(E.b||E.a,fr);
+ var ren=new THREE.WebGLRenderer({antialias:true,alpha:true});ren.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+ var sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(35,1.4,.1,50);
+ sc.add(new THREE.HemisphereLight(0xffffff,0x8a94b8,.95));var dl=new THREE.DirectionalLight(0xffffff,.8);dl.position.set(2,4,3);sc.add(dl);
+ var M=function(c){return new THREE.MeshStandardMaterial({color:c,roughness:.5,metalness:.05})},mb=M(0x2ba4a0),mf=M(0x1f7f7c),ma=M(0xff8a4c),mh=M(0xf3efe7),mp=M(0x8f97b8);
+ ALLK.forEach(function(k){v.P[k]=new THREE.Vector3()});
+ function sph(r,m){var s=new THREE.Mesh(new THREE.SphereGeometry(r,16,12),m);sc.add(s);return s}
+ function cyl(r1,r2,m){var s=new THREE.Mesh(new THREE.CylinderGeometry(r2,r1,1,14,1),m);sc.add(s);return s}
+ for(var i=0;i<=6;i++){v.TP.push(new THREE.Vector3());var r=.092+.02*(i/6);v.ts.push(sph(r,mb));if(i<6)v.tm.push(cyl(r,.092+.02*((i+1)/6),mb))}
+ [["hn","k",.068,.052,mb],["k","a",.052,.04,mb],["a","t",.04,.032,mb],["sn","e",.045,.038,mb],["e","w",.038,.03,mb],
+  ["hf","k2",.068,.052,mf],["k2","a2",.052,.04,mf],["a2","t2",.04,.032,mf],["sf","e2",.045,.038,mf],["e2","w2",.038,.03,mf],
+  ["hf","hn",.07,.07,mb],["sf","sn",.05,.05,mb],["S","hd",.045,.045,mb]].forEach(function(b){v.bones.push({a:b[0],b:b[1],m:cyl(b[2],b[3],b[4])})});
+ [["hn",.07,mb],["hf",.07,mf],["sn",.055,mb],["sf",.055,mf],["k",.054,ma],["k2",.054,ma],["e",.046,ma],["e2",.046,ma],["a",.04,mb],["a2",.04,mf],["t",.03,mb],["t2",.03,mf],["w",.044,mb],["w2",.044,mf],["hd",.105,mh]].forEach(function(j){v.joints.push({k:j[0],m:sph(j[1],j[2])})});
+ v.face=sph(.03,ma);
+ var cv=document.createElement("canvas");cv.width=cv.height=64;var g=cv.getContext("2d"),gr=g.createRadialGradient(32,32,2,32,32,32);gr.addColorStop(0,"rgba(0,0,0,.4)");gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(0,0,64,64);
+ v.shadow=new THREE.Mesh(new THREE.PlaneGeometry(1.1,1.1),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cv),transparent:true,depthWrite:false}));v.shadow.rotation.x=-Math.PI/2;sc.add(v.shadow);
+ var fl=new THREE.Mesh(new THREE.CircleGeometry(1.9,48),new THREE.MeshBasicMaterial({color:0x8b93b8,transparent:true,opacity:.16}));fl.rotation.x=-Math.PI/2;sc.add(fl);
+ var rg=new THREE.Mesh(new THREE.RingGeometry(1.86,1.9,64),new THREE.MeshBasicMaterial({color:0xff8a4c,transparent:true,opacity:.5,side:THREE.DoubleSide}));rg.rotation.x=-Math.PI/2;rg.position.y=.003;sc.add(rg);
+ /* props (chair, bench, wall, bar) */
+ var Rb=place(build(eff(E.b||E.a,fr),fr),v.pin,v.px),X=function(x){return(x-v.px)*S3},Yy=function(y){return(FL-y)*S3};
+ function box(cx,cy,cz,sx,sy,sz,m){var b=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),m||mp);b.position.set(cx,cy,cz);sc.add(b)}
+ function legs(x1,x2,y,zw){[x1,x2].forEach(function(x){[-zw,zw].forEach(function(z){box(X(x),Yy(y)/2,z,.04,Yy(y),.04)})})}
+ (E.props||[]).forEach(function(s){var n=s[0],x1,x2,y;
+  if(n==="chair"){x1=Rb.hip[0]-22;x2=Rb.hip[0]+12;y=Rb.hip[1]+5;box(X((x1+x2)/2),Yy(y)-.02,0,(x2-x1)*S3,.04,.5);box(X(x1),Yy(y-20),0,.04,40*S3,.5);legs(x1+2,x2-2,y,.2)}
+  else if(n==="bench"||n==="benchh"){y=(n==="bench"?Rb.hip[1]:Rb.w2[1])+6;x1=(n==="bench"?Rb.hip[0]:Math.min(Rb.k2[0],Rb.w2[0]))-12;x2=(n==="bench"?Rb.S[0]:Rb.w2[0])+14;box(X((x1+x2)/2),Yy(y)-.03,0,(x2-x1)*S3,.06,.34);legs(x1+4,x2-4,y,.12)}
+  else if(n==="wall"){box(X(Rb[s[1]][0]+5),.95,0,.06,1.9,2.4,new THREE.MeshStandardMaterial({color:0x8f97b8,transparent:true,opacity:.35}))}
+  else if(n==="bar"){var br=new THREE.Group(),bm=new THREE.Mesh(new THREE.CylinderGeometry(.015,.015,1.1,10),mp);bm.rotation.x=Math.PI/2;br.add(bm);
+   [-.45,.45].forEach(function(z){var p=new THREE.Mesh(new THREE.CylinderGeometry(.11,.11,.04,18),M(0x444b6b));p.rotation.x=Math.PI/2;p.position.z=z;br.add(p)});sc.add(br);v.bar=br}});
+ /* camera fit from both poses */
+ var mn=[9,9,9],mx=[-9,-9,-9];[0,.5,1].forEach(function(pr){upd(v,pr);["hip","S","e","w","e2","w2","k","a","t","k2","a2","t2","hd"].forEach(function(k){var p=v.P[k];[p.x,p.y,p.z].forEach(function(c,i){mn[i]=Math.min(mn[i],c);mx[i]=Math.max(mx[i],c)})})});
+ var W=fr?mx[2]-mn[2]:mx[0]-mn[0],H=mx[1];v.tx=fr?0:(mn[0]+mx[0])/2;v.tz=fr?(mn[2]+mx[2])/2:0;v.ty=Math.max(.6,H/2);v.dist=Math.max(2.14*H,1.35*W,2.4);
+ fl.position.set(v.tx,0,v.tz);rg.position.x=v.tx;rg.position.z=v.tz;
+ v.az0=fr?1.15:.5;v.el0=.2;v.az=v.az0;v.el=v.el0;
+ /* UI */
+ var ui=document.createElement("div"),box_=document.createElement("div"),hud=document.createElement("div"),cap=document.createElement("p"),bt=document.createElement("div"),nt=document.createElement("p"),pz=document.createElement("button"),rs=document.createElement("button");
+ box_.style.cssText="position:relative;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--bg);touch-action:pan-y;cursor:grab;margin:10px 0 4px";
+ ren.domElement.style.cssText="display:block;width:100%;height:auto";hud.style.cssText="position:absolute;left:12px;top:9px;font:700 12px system-ui,sans-serif;color:var(--mute);pointer-events:none";
+ cap.className="sub";cap.style.cssText="text-align:center;margin:2px 0;font-weight:700;color:var(--acc);min-height:20px";bt.className="chips";bt.style.justifyContent="center";
+ pz.className=rs.className="chip";pz.textContent="Pause";rs.textContent="Reset view";nt.className="sub";nt.style.cssText="text-align:center;margin:6px 0 8px";nt.textContent=(E.n||"")+" Drag to rotate.";
+ pz.onclick=function(){v.paused=!v.paused;pz.textContent=v.paused?"Play":"Pause"};rs.onclick=function(){v.az=v.az0;v.el=v.el0;v.dirty=1};
+ box_.appendChild(ren.domElement);box_.appendChild(hud);bt.appendChild(pz);bt.appendChild(rs);ui.appendChild(box_);ui.appendChild(cap);ui.appendChild(bt);ui.appendChild(nt);
+ el.firstChild.style.display="none";el.appendChild(ui);
+ var dr=null;box_.onpointerdown=function(e){dr=[e.clientX,e.clientY];try{box_.setPointerCapture(e.pointerId)}catch(x){}box_.style.cursor="grabbing"};
+ box_.onpointermove=function(e){if(!dr)return;v.az-=(e.clientX-dr[0])*.012;v.el=Math.max(-.05,Math.min(1.1,v.el+(e.clientY-dr[1])*.008));dr=[e.clientX,e.clientY];v.dirty=1};
+ box_.onpointerup=box_.onpointercancel=function(){dr=null;box_.style.cursor="grab"};
+ v.ren=ren;v.sc=sc;v.cam=cam;v.ui=ui;v.box=box_;v.hud=hud;v.cap=cap;v.cw=0;return v}
+function draw3(v,t){
+ var dt=v.last?Math.min(100,t-v.last):0;v.last=t;var anim=!!v.E.b&&!v.paused;if(anim){v.clock+=dt}
+ if(!anim&&!v.dirty&&v.drawn)return;v.drawn=1;v.dirty=0;
+ var w=v.box.clientWidth||320;if(w!==v.cw){v.cw=w;var h=Math.round(w*.72);v.ren.setSize(w,h,false);v.cam.aspect=w/h;v.cam.updateProjectionMatrix()}
+ var pr=v.E.b?prog((v.clock%CYC)/CYC):0,B=upd(v,pr),lb=v.E.lb||(v.E.b?["Start","End"]:["Position"]);
+ v.hud.textContent=lb[pr>.5?1:0];var ks=v.E.k||[],tx=ks.map(function(k){return JT[k][3]+" "+ang(B,k)+"°"}).join(" · ");if(v.cap.textContent!==tx)v.cap.textContent=tx;
+ var c=v.cam;c.position.set(v.tx+v.dist*Math.sin(v.az)*Math.cos(v.el),v.ty+v.dist*Math.sin(v.el),v.tz+v.dist*Math.cos(v.az)*Math.cos(v.el));c.lookAt(v.tx,v.ty,v.tz);v.ren.render(v.sc,c)}
+function kill(v){if(v.dead)return;v.dead=1;try{v.ui.remove();v.el.firstChild.style.display="";v.ren.dispose();v.ren.forceContextLoss()}catch(e){}if(v.el._v===v)v.el._v=null}
+function loop(t){raf=0;V=V.filter(function(v){if(!v.el.isConnected||v.dead){kill(v);return false}return true});V.forEach(function(v){draw3(v,t)});if(V.length)raf=requestAnimationFrame(loop)}
+function startV(el){if(el._v||el._bad)return;loadThree(function(){if(!el.isConnected||el._v||!el._vis)return;try{el._v=mk(el);V.push(el._v);if(!raf)raf=requestAnimationFrame(loop)}catch(e){el._bad=1;el._v=null}},function(){el._bad=1})}
+var io=window.IntersectionObserver?new IntersectionObserver(function(es){es.forEach(function(e){e.target._vis=e.isIntersecting;if(e.isIntersecting)startV(e.target);else if(e.target._v)kill(e.target._v)})},{threshold:.01}):null;
+function watch(n){if(!io||n.nodeType!==1)return;var l=[].slice.call(n.querySelectorAll(".wf3"));if(n.matches&&n.matches(".wf3"))l.push(n);l.forEach(function(x){if(!x._w){x._w=1;io.observe(x)}})}
+new MutationObserver(function(ms){ms.forEach(function(m){m.addedNodes.forEach(watch)})}).observe(document.documentElement,{childList:true,subtree:true});
+if(document.body)watch(document.body);
+window.fig2d=fig;window.fig=fig3;window.WF_POSES=T;
+
 })();

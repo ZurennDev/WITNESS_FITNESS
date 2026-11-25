@@ -27,7 +27,7 @@ nav button{font:inherit;font-size:12px;font-weight:600;background:none;border:0;
 details{border-bottom:1px solid var(--line);padding:10px 0}summary{cursor:pointer;display:flex;justify-content:space-between;gap:8px}ol{padding-left:20px;margin-top:6px}details.all{border:0;padding:0;margin-top:14px}details.all summary{display:block;list-style:none;text-align:center;font-weight:700;color:var(--acc);border:1.5px solid var(--line);border-radius:12px;padding:12px}details.all summary::-webkit-details-marker{display:none}details.all[open] .bo,details.all:not([open]) .bc{display:none}details.all[open]>summary{margin-bottom:6px}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;font-size:11px;color:var(--mute)}.cal button{font:inherit;font-size:13px;padding:7px 0;border-radius:8px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
 .cal .done{background:rgba(14,138,91,.25)}.cal .missed{background:rgba(214,64,44,.2)}.cal .rest{opacity:.55}.cal .today{border-color:var(--acc)}.cal .planned{border-style:dashed;border-color:var(--acc)}.cal [aria-pressed=true]{outline:2px solid var(--acc)}
-#toast{position:fixed;top:12px;left:50%;transform:translate(-50%,-140px);width:calc(100% - 28px);max-width:410px;background:var(--ink);color:var(--bg);padding:13px 15px;border-radius:14px;font-weight:600;font-size:14px;transition:transform .3s;z-index:9}#toast.show{transform:translate(-50%,0)}
+#toast{position:fixed;top:12px;left:50%;transform:translate(-50%,-140px);width:calc(100% - 28px);max-width:410px;background:var(--ink);color:var(--bg);padding:13px 15px;border-radius:14px;font-weight:600;font-size:14px;z-index:9}#toast.show{transform:translate(-50%,0)}
 .big{font-size:56px;font-weight:800;text-align:center}.ph{text-align:center;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--acc)}
 .auth{padding:50px 18px 30px}.auth h1{text-align:center;margin-bottom:6px}.ok{color:var(--ok);font-size:13px;margin-top:8px}.warn{background:var(--line);border-radius:10px;padding:9px 11px;font-size:13px;margin-top:10px}
 body.authb{background:#13262D}
@@ -46,12 +46,10 @@ body.authb{background:#13262D}
 .auth input[type=checkbox]{width:auto;padding:0;border-radius:4px;accent-color:#FF6B2C}
 .auth .btn{background:#FF6B2C;color:#fff;border-radius:18px;padding:17px;font-size:17px;font-weight:600;margin-top:26px;box-shadow:0 8px 26px rgba(255,107,44,.35)}
 .forgot{display:block;margin:18px auto 0;font:inherit;font-size:15px;color:#B4C2C7;background:none;border:0;text-decoration:underline;cursor:pointer}
-@media(prefers-reduced-motion:reduce){*{transition:none!important}}
-
 /* v3 polish */
 h1{font-size:28px;font-weight:800;line-height:1.15}h2{font-size:17px;font-weight:700;margin:26px 0 8px}
 .card{border-radius:18px;padding:16px;box-shadow:0 1px 2px rgba(23,26,46,.05),0 6px 18px rgba(23,26,46,.06)}
-.btn{min-height:50px;border-radius:14px;transition:transform .08s,opacity .15s}.btn:active{transform:scale(.98);opacity:.9}.btn:disabled{opacity:.45;cursor:default}.btn.s{min-height:40px}
+.btn{min-height:50px;border-radius:14px}.btn:active{opacity:.9}.btn:disabled{opacity:.45;cursor:default}.btn.s{min-height:40px}
 input,select{min-height:48px;border-radius:14px}input[type=checkbox]{min-height:0;width:20px;height:20px;accent-color:var(--acc);flex:none}
 .chip{min-height:40px}
 nav{box-shadow:0 -4px 16px rgba(23,26,46,.07)}nav button{position:relative;min-height:58px}
